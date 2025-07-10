@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디지털 게시판</title>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff; /* Changed to white */
+            color: #1a202c; /* Changed to dark for general text */
+            font-family: 'Pretendard', sans-serif;
+        }
+        .display-grid {
+            display: grid;
+            grid-template-rows: auto 1fr auto; /* Header, Main (1fr), Footer */
+            height: 100vh;
+        }
+        .header, .footer {
+            flex-shrink: 0;
+            background-color: #1a202c; /* Dark background for header/footer */
+            color: #ffffff; /* White text for header/footer */
+            padding: 1rem 2.5rem;
+            font-size: 1.75rem; /* Increased font size */
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .footer {
+            display: flex;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .school-name {
+            font-size: 2.75rem;
+            font-weight: 800;
+        }
+        .clock {
+            font-size: 2.75rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .meal-title {
+            font-weight: 700;
+            margin-right: 1.5rem;
+        }
+        .content-slider {
+            position: relative; /* Crucial for layout fix and progress bar */
+            overflow: hidden; /* Hide anything that might spill out */
+        }
+        .swiper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .swiper-slide {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+        .slide-content {
+            width: 100%;
+            height: 100%;
+            padding: 2rem;
+            overflow-y: auto;
+            background-color: white; /* Changed to white */
+            color: black; /* Changed to black for readability */
+            border-radius: 0.5rem; /* Optional: Add some rounded corners */
+            &::-webkit-scrollbar { width: 6px; }
+            &::-webkit-scrollbar-track { background: transparent; }
+            &::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.3); border-radius: 3px; } /* Adjusted scrollbar for dark on light */
+        }
+        .slider-progress-bar-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .slider-progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #34d399; /* Emerald-400 */
+        }
+        @keyframes progress-bar-kf {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="display-grid">
+        <!-- Header: School Name and Clock -->
+        <header class="header">
+            <div class="flex items-center">
+                <div id="school-name" class="school-name">로딩 중...</div>
+                <div class="ml-6 flex items-center space-x-2">
+                    <button id="change-username-btn" class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>                   
+                        사용자 변경     
+                    </button>
+                    <button id="fullscreen-btn" class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center">
+                        <svg class="w-4 h-4 mr-2 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                        전체화면
+                    </button>
+                </div>
+            </div>
+            <div id="clock" class="clock">00:00:00</div>
+        </header>
+
+        <!-- Main Content: Slider -->
+        <main class="content-slider">
+            <div class="swiper">
+                <div class="swiper-wrapper">
+                    <!-- Slides will be dynamically injected here -->
+                </div>
+            </div>
+            <div class="slider-progress-bar-container">
+                <div class="slider-progress-bar"></div>
+            </div>
+        </main>
+
+        <!-- Footer: Meal Info -->
+        <footer class="footer">
+            <div class="meal-title">오늘의 급식</div>
+            <div id="meal-menu" class="flex-1">로딩 중...</div>
+        </footer>
+    </div>
+
+    <!-- Username Input Modal -->
+    <div id="username-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div class="mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">사용자 정보 입력</h2>
+                <p class="text-gray-600">디스플레이를 시작하려면 사용자명을 입력하세요</p>
+            </div>
+            
+            <form id="username-form" class="space-y-4">
+                <div>
+                    <label for="username-input" class="block text-sm font-medium text-gray-700 mb-2 text-left">사용자명</label>
+                    <input type="text" id="username-input" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors" placeholder="사용자명을 입력하세요" required>
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                    디스플레이 시작
+                </button>
+            </form>
+            
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <p class="text-xs text-blue-700">
+                    💡 <strong>안내:</strong> 관리자 페이지에서 등록한 사용자명을 입력하세요
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const swiperWrapper = document.querySelector('.swiper-wrapper');
+            const schoolNameEl = document.getElementById('school-name');
+            const mealMenuEl = document.getElementById('meal-menu');
+            const progressBar = document.querySelector('.slider-progress-bar');
+            const usernameModal = document.getElementById('username-modal');
+            const usernameForm = document.getElementById('username-form');
+            const usernameInput = document.getElementById('username-input');
+            let swiper;
+            let lastSlidesHtml = '';
+            let currentUsername = null;
+
+            // URL에서 username 파라미터 확인
+            const urlParams = new URLSearchParams(window.location.search);
+            currentUsername = urlParams.get('username');
+
+            // --- Username Modal Functions ---
+            const showUsernameModal = () => {
+                usernameModal.classList.remove('hidden');
+                usernameInput.focus();
+            };
+
+            const hideUsernameModal = () => {
+                usernameModal.classList.add('hidden');
+            };
+
+            const setUsername = (username) => {
+                currentUsername = username;
+                // URL 업데이트 (새로고침 없이)
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('username', username);
+                window.history.replaceState({}, '', newUrl);
+                hideUsernameModal();
+                // 데이터 다시 로드
+                fetchDisplayData(true);
+            };
+
+            // Username 폼 제출 처리
+            usernameForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = usernameInput.value.trim();
+                if (username) {
+                    setUsername(username);
+                }
+            });
+
+            // 사용자 변경 버튼 클릭 처리
+            document.getElementById('change-username-btn').addEventListener('click', () => {
+                usernameInput.value = currentUsername || '';
+                showUsernameModal();
+            });
+
+            // --- Fullscreen Functions ---
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const changeUsernameBtn = document.getElementById('change-username-btn');
+            
+            const updateFullscreenBtn = () => {
+                if (document.fullscreenElement) {
+                    fullscreenBtn.style.display = 'none'; // 전체화면일 때 버튼 숨기기
+                    changeUsernameBtn.style.display = 'none'; // 전체화면일 때 사용자 변경 버튼도 숨기기
+                } else {
+                    fullscreenBtn.style.display = 'flex'; // 전체화면이 아닐 때 버튼 보이기
+                    changeUsernameBtn.style.display = 'flex'; // 전체화면이 아닐 때 사용자 변경 버튼도 보이기
+                }
+            };
+
+            const toggleFullscreen = () => {
+                if (!document.fullscreenElement) {
+                    // 전체화면 진입
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log(`전체화면 진입 실패: ${err.message}`);
+                    });
+                } else {
+                    // 전체화면 해제
+                    document.exitFullscreen().catch(err => {
+                        console.log(`전체화면 해제 실패: ${err.message}`);
+                    });
+                }
+            };
+
+            // 전체화면 버튼 클릭 처리
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+            // 전체화면 상태 변경 감지
+            document.addEventListener('fullscreenchange', updateFullscreenBtn);
+
+            // ESC 키로 전체화면 해제 감지
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.fullscreenElement) {
+                    updateFullscreenBtn();
+                }
+            });
+
+            // 초기 전체화면 버튼 상태 설정
+            updateFullscreenBtn();
+
+            // --- Swiper & Progress Bar ---
+            const startProgressBarAnimation = (duration) => {
+                progressBar.style.animation = 'none';
+                void progressBar.offsetWidth; // Trigger reflow to restart animation
+                progressBar.style.animation = `progress-bar-kf ${duration}s linear forwards`;
+            };
+
+            const initializeSwiper = (slides) => {
+                if (swiper) swiper.destroy(true, true);
+                
+                swiper = new Swiper('.swiper', {
+                    loop: slides.length > 1, // Only loop if there is more than one slide
+                    effect: 'fade',
+                    fadeEffect: { crossFade: true },
+                    autoplay: {
+                        delay: (slides[0]?.duration || 10) * 1000,
+                        disableOnInteraction: false,
+                    },
+                    on: {
+                        init: (s) => {
+                            const firstSlideDuration = s.slides[s.activeIndex]?.dataset.duration || 10;
+                            startProgressBarAnimation(firstSlideDuration);
+                        },
+                        slideChangeTransitionStart: (s) => {
+                            const currentSlide = s.slides[s.activeIndex];
+                            if (!currentSlide) return;
+                            
+                            const duration = parseInt(currentSlide.dataset.duration, 10);
+                            if (s.params.autoplay.delay !== duration * 1000) {
+                                s.autoplay.stop();
+                                s.params.autoplay.delay = duration * 1000;
+                                s.autoplay.start();
+                            }
+                            startProgressBarAnimation(duration);
+                        }
+                    }
+                });
+            };
+
+            // --- Data Rendering ---
+            const renderSlides = (slides) => {
+                swiperWrapper.innerHTML = '';
+                if (slides.length === 0) {
+                    swiperWrapper.innerHTML = `
+                        <div class="swiper-slide" data-duration="10">
+                            <div class="slide-content text-center">
+                                <h2 class="text-5xl font-bold">공지사항</h2>
+                                <p class="text-3xl mt-6">현재 등록된 공지사항이 없습니다.</p>
+                            </div>
+                        </div>`;
+                } else {
+                    slides.forEach(slide => {
+                        const slideEl = document.createElement('div');
+                        slideEl.className = 'swiper-slide';
+                        slideEl.dataset.duration = slide.duration;
+                        slideEl.innerHTML = `<div class="slide-content">${slide.content}</div>`;
+                        swiperWrapper.appendChild(slideEl);
+                    });
+                }
+                initializeSwiper(slides);
+            };
+
+            // --- Data Fetching ---
+            const fetchMealInfo = async (areaCode, schoolCode) => {
+                try {
+                    const response = await fetch(`php/get_meal.php?area_code=${areaCode}&school_code=${schoolCode}`);
+                    const result = await response.json();
+                    mealMenuEl.textContent = result.status === 'success' ? result.menu : result.message;
+                    console.log(result.date);
+                } catch (error) {
+                    console.error('Error fetching meal info:', error);
+                    mealMenuEl.textContent = '급식 정보 로딩 실패';
+                }
+            };
+
+            const fetchDisplayData = async (isInitialLoad = false) => {
+                console.log(`[${new Date().toLocaleTimeString()}] 최신 콘텐츠 확인...`);
+                try {
+                    if (!currentUsername) {
+                        schoolNameEl.textContent = "사용자 정보 필요";
+                        renderSlides([{ content: '<div class="text-center text-3xl">사용자명을 입력해주세요.<br><br><div class="text-xl text-gray-600">우측 상단의 사용자 입력 버튼을 클릭하세요</div></div>', duration: 10 }]);
+                        showUsernameModal();
+                        return;
+                    }
+
+                    const response = await fetch(`php/get_display_data.php?username=${currentUsername}`);
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        if (isInitialLoad) {
+                            schoolNameEl.textContent = result.user_info.school_name;
+                            fetchMealInfo(result.user_info.api_area_code, result.user_info.api_school_code);
+                        }
+
+                        const newSlidesHtml = result.slides.map(s => s.content).join('');
+                        if (lastSlidesHtml !== newSlidesHtml) {
+                            console.log('새로운 콘텐츠 발견! 슬라이드를 업데이트합니다.');
+                            lastSlidesHtml = newSlidesHtml;
+                            renderSlides(result.slides);
+                        }
+                    } else {
+                        schoolNameEl.textContent = "오류";
+                        renderSlides([{ content: `<div class="text-center text-3xl">${result.message}<br><br><div class="text-xl text-gray-600">다른 사용자명을 시도해보세요</div></div>`, duration: 10 }]);
+                        showUsernameModal();
+                    }
+                } catch (error) {
+                    console.error('Error fetching display data:', error);
+                    schoolNameEl.textContent = "연결 오류";
+                    renderSlides([{ content: '<div class="text-center text-3xl">서버 연결에 실패했습니다.<br><br><div class="text-xl text-gray-600">네트워크 상태를 확인해주세요</div></div>', duration: 10 }]);
+                }
+            };
+            
+            // --- Clock ---
+            let lastDate = new Date().toDateString(); // Store the last known date
+            
+            const updateClock = () => {
+                const now = new Date();
+                const currentDate = now.toDateString();
+                
+                // Check if date has changed (midnight passed)
+                if (lastDate !== currentDate) {
+                    console.log('날짜가 변경되었습니다. 페이지를 새로고침합니다.');
+                    location.reload(); // Refresh the entire page
+                    return;
+                }
+                
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][now.getDay()];
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+
+                const formattedDate = `${year}.${month}.${day}(${dayOfWeek})`;
+                const formattedTime = `${hours}:${minutes}:${seconds}`;
+
+                document.getElementById('clock').textContent = `${formattedDate} ${formattedTime}`;
+            };
+
+            // --- Initial Load and Polling ---
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            fetchDisplayData(true); // Initial fetch
+            setInterval(() => fetchDisplayData(false), 5000); // Poll for new data
+        });
+    </script>
+</body>
+</html>

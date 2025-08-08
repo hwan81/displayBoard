@@ -386,7 +386,7 @@
                 try {
                     if (!currentUsername) {
                         schoolNameEl.textContent = "사용자 정보 필요";
-                        renderSlides([{ content: '<div class="text-center text-3xl">사용자명을 입력해주세요.<br><br><div class="text-xl text-gray-600">우측 상단의 사용자 입력 버튼을 클릭하세요</div></div>', duration: 10 }]);
+                        renderSlides([{ content: '<div class="text-center text-3xl">사용자명을 입력해주세요.<br><br><div class="text-xl text-gray-600">우측 상단의 사용자 변경 버튼을 클릭하세요</div></div>', duration: 10 }]);
                         showUsernameModal();
                         return;
                     }
@@ -395,21 +395,21 @@
                     const result = await response.json();
 
                     if (result.status === 'success') {
-                        if (isInitialLoad) {
-                            schoolNameEl.textContent = result.user_info.school_name;
-                            // hide_meal_info 설정 확인하여 급식 정보 표시 여부 결정
-                            const mealTitleEl = document.querySelector('.meal-title');
-                            if (result.user_info.hide_meal_info == 1) {
-                                mealTitleEl.textContent = '';
-                                mealMenuEl.textContent = '';
+                        // 사용자 정보가 성공적으로 로드되면 항상 학교 이름 업데이트
+                        schoolNameEl.textContent = result.user_info.school_name;
+
+                        // hide_meal_info 설정 확인하여 급식 정보 표시 여부 결정
+                        const mealTitleEl = document.querySelector('.meal-title');
+                        if (result.user_info.hide_meal_info == 1) {
+                            mealTitleEl.textContent = '';
+                            mealMenuEl.textContent = '';
+                        } else {
+                            mealTitleEl.textContent = '오늘의 급식';
+                            // API 정보가 있을 때만 급식 정보 요청
+                            if (result.user_info.api_area_code && result.user_info.api_school_code) {
+                                fetchMealInfo(result.user_info.api_area_code, result.user_info.api_school_code);
                             } else {
-                                mealTitleEl.textContent = '오늘의 급식';
-                                // API 정보가 있을 때만 급식 정보 요청
-                                if (result.user_info.api_area_code && result.user_info.api_school_code) {
-                                    fetchMealInfo(result.user_info.api_area_code, result.user_info.api_school_code);
-                                } else {
-                                    mealMenuEl.textContent = '급식 정보 설정이 필요합니다';
-                                }
+                                mealMenuEl.textContent = '급식 정보 설정이 필요합니다';
                             }
                         }
 

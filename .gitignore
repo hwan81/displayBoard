@@ -1,0 +1,38 @@
+# 보안 설정 파일
+php/db_config.php
+
+# 디버그 파일
+phptest.php
+index_debug.php
+
+# IDE 설정
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 로그 파일
+*.log
+error.log
+
+# 운영체제 파일
+.DS_Store
+Thumbs.db
+
+# 임시 파일
+*.tmp
+*.temp
+
+# 백업 파일
+*.backup
+*_backup.*
+index_backup.html
+
+# 환경별 설정
+.env
+.env.local
+.env.production
+
+# 배포 파일
+*.zip
+digital-signage-system.zip

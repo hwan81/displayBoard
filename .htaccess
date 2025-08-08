@@ -1,0 +1,11 @@
+DirectoryIndex index.php index.html index.htm
+Options +FollowSymLinks
+RewriteEngine On
+
+# Force PHP execution
+AddType application/x-httpd-php .php
+
+# Default to index.php if no file specified
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^$ index.php [L]
